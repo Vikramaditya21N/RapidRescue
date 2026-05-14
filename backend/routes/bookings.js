@@ -23,6 +23,7 @@ function generateEstimatedTimeOfArrival() {
   return `${minMinutes}-${maxMinutes} minutes`;
 }
 
+// [POST] Create a new ambulance booking (Triggered by Patient from booking.html)
 router.post('/', async (request, response) => {
   try {
     const bookingDetails = request.body;
@@ -87,6 +88,7 @@ router.post('/', async (request, response) => {
   }
 });
 
+// [GET] Fetch a specific booking by ID (Used by track.html for Live Tracking)
 router.get('/:booking_id', async (request, response) => {
   try {
     const bookingId = request.params.booking_id;
@@ -103,6 +105,7 @@ router.get('/:booking_id', async (request, response) => {
   }
 });
 
+// [GET] Fetch all bookings (Used by Admin Dashboard to list pending/active rides)
 router.get('/', requireAuthentication, async (request, response) => {
   try {
     const allBookings = await Booking.find().sort({ created_at: -1 });
@@ -117,6 +120,7 @@ router.get('/', requireAuthentication, async (request, response) => {
   }
 });
 
+// [PATCH] Update the status of a booking (Admin Dashboard: Accept -> Dispatched -> Completed)
 router.patch('/:booking_id/status', requireAuthentication, async (request, response) => {
   try {
     const bookingId = request.params.booking_id;

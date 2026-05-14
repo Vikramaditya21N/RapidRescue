@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const allProgressItems = [1, 2, 3].map(stepNumber => document.getElementById(`stepProg${stepNumber}`));
   const allProgressLines = document.querySelectorAll('.step-prog-line');
 
+  // Handles switching between the three steps of the booking form and animating the top progress bar.
   function navigateToStep(targetStepNumber) {
     allStepContainers.forEach((stepContainer, index) => {
       const isTargetStep = index === targetStepNumber - 1;
@@ -31,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  // Listens for clicks on the Ambulance Type cards (Basic, Advanced, etc.) and updates the selected data.
   function initializeAmbulanceTypeSelector() {
     const typeSelectionCards = document.querySelectorAll('.type-select-card');
     const hiddenTypeInput = document.getElementById('ambulanceType');
@@ -61,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Uses the browser's native HTML5 Geolocation API to grab the patient's exact real-world coordinates.
   function initializeGpsLocationDetection() {
     const gpsDetectionButton = document.getElementById('gpsBtn');
     if (!gpsDetectionButton) return;
@@ -174,6 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Calculates the dynamic pricing fare (Base Fare + Estimated Distance) and builds the final receipt screen.
   function buildConfirmationSummaryScreen() {
     const summaryContainer = document.getElementById('confirmSummary');
     if (!summaryContainer) return;
@@ -211,6 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
     summaryContainer.innerHTML = summaryHtmlContent;
   }
 
+  // Handles the Razorpay payment gateway integration (if Online Payment is selected) and pushes the final booking to the backend.
   function initializeConfirmBookingButton() {
     const confirmDispatchButton = document.getElementById('confirmBookBtn');
     if (!confirmDispatchButton) return;
