@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Rapid Rescue</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body { background: var(--bg-900); padding-top: 80px; }
+    .admin-container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+    .stat-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: var(--bg-700); padding: 1.5rem; border-radius: var(--radius-lg); border: var(--border-glass); }
+    .stat-card h3 { font-size: 0.9rem; color: var(--text-400); margin-bottom: 0.5rem; }
+    .stat-card .val { font-size: 2rem; font-weight: 800; color: white; }
+    
+    .table-wrapper { background: var(--bg-800); border-radius: var(--radius-xl); border: var(--border-glass); overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th, td { padding: 1rem; border-bottom: 1px solid var(--bg-600); font-size: 0.9rem; }
+    th { background: var(--bg-700); color: var(--text-400); font-weight: 600; }
+    td { color: var(--text-white); }
+    
+    .badge { padding: 0.3rem 0.6rem; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 600; }
+    .badge-pending { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
+    .badge-en-route { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+    .badge-completed { background: rgba(74, 222, 128, 0.15); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.3); }
+    
+    .action-btn { background: transparent; border: 1px solid var(--bg-600); color: var(--text-200); padding: 0.4rem 0.8rem; border-radius: var(--radius-md); cursor: pointer; font-size: 0.8rem; transition: 0.2s; }
+    .action-btn:hover { background: var(--bg-700); color: white; border-color: var(--text-400); }
+    
+    @media(max-width: 900px) { .stat-cards { grid-template-columns: 1fr 1fr; } }
+    @media(max-width: 600px) { .stat-cards { grid-template-columns: 1fr; } .table-wrapper { overflow-x: auto; } }
+  </style>
+</head>
+<body>
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <div class="brand-icon"><i class="fas fa-truck-medical"></i></div>
+        <span class="brand-text">Rapid<span class="brand-accent">Rescue</span> <span style="font-size:0.5em;color:var(--text-400)">ADMIN</span></span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link">Back to Website</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="admin-container">
+    <div class="admin-header">
+      <h2>Dispatch Dashboard</h2>
+      <button class="btn btn-outline" onclick="loadBookings()"><i class="fas fa-sync"></i> Refresh</button>
+    </div>
+
+    <div class="stat-cards">
+      <div class="stat-card"><h3>Active Dispatches</h3><div class="val" id="statActive">0</div></div>
+      <div class="stat-card"><h3>Pending Requests</h3><div class="val" id="statPending" style="color:var(--red-400)">0</div></div>
+    </div>
+
+    <div class="table-wrapper">
+      <table id="bookingsTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Patient</th>
+            <th>Location</th>
+            <th>Type</th>
+            <th>Time</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="bookingsBody">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    async function loadBookings() {
+      const tbody = document.getElementById('bookingsBody');
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
+      
+      try {
+        const response = await fetch('http://localhost:4000/api/bookings', {
+          headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('rr_token')
+          }
+        });
+        const data = await response.json();
+        const dataToRender = data.bookings || [];
+
+        tbody.innerHTML = '';
+        let pendingCount = 0;
+        let activeCount = 0;
+        
+        dataToRender.forEach(b => {
+          if(b.status === 'pending') pendingCount++;
+          if(b.status === 'dispatched' || b.status === 'en_route') activeCount++;
+
+          let badgeClass = b.status === 'pending' ? 'badge-pending' : (b.status === 'completed' ? 'badge-completed' : 'badge-en-route');
+          let actionBtn = b.status === 'pending' 
+            ? `<button class="action-btn" onclick="updateStatus('${b.booking_id}', 'dispatched')">Accept</button>`
+            : (b.status === 'dispatched' 
+                ? `<button class="action-btn" onclick="startSharingLocation('${b.booking_id}', this)" style="margin-right:5px"><i class="fas fa-location-crosshairs"></i> Drive</button><button class="action-btn" onclick="updateStatus('${b.booking_id}', 'completed')">Arrived</button>` 
+                : `<span style="color:var(--text-600)">Done</span>`);
+
+          tbody.innerHTML += `
+            <tr>
+              <td><strong>${b.booking_id}</strong></td>
+              <td>${b.patient_name || 'Unknown'}</td>
+              <td>${(b.pickup_address || '').substring(0, 30)}...</td>
+              <td>${b.ambulance_type || 'BLS'}</td>
+              <td><span style="color:var(--text-400)">Just now</span></td>
+              <td><span class="badge ${badgeClass}">${b.status.toUpperCase()}</span></td>
+              <td>${actionBtn}</td>
+            </tr>
+          `;
+        });
+
+        document.getElementById('statPending').innerText = pendingCount;
+        document.getElementById('statActive').innerText = activeCount;
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--red-400)">Error loading bookings</td></tr>';
+      }
+    }
+
+    async function updateStatus(id, newStatus) {
+      try {
+        await fetch(`http://localhost:4000/api/bookings/${id}/status`, {
+          method: 'PATCH',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('rr_token')
+          },
+          body: JSON.stringify({ status: newStatus })
+        });
+        
+        if (typeof showToast !== 'undefined') {
+          showToast(`Booking ${id} status updated to: ${newStatus.toUpperCase()}`, 'success');
+        } else {
+          alert(`Booking ${id} status updated to: ${newStatus.toUpperCase()}`);
+        }
+        
+        loadBookings();
+      } catch (e) {
+        if (typeof showToast !== 'undefined') {
+          showToast('Failed to update status', 'error');
+        } else {
+          alert('Failed to update status');
+        }
+      }
+    }
+
+    let watchId = null;
+    function startSharingLocation(id, btn) {
+      if (watchId) navigator.geolocation.clearWatch(watchId);
+      
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Driving...';
+      btn.style.color = '#4ade80';
+      btn.style.borderColor = '#4ade80';
+
+      if (!navigator.geolocation) {
+        alert('GPS not supported');
+        return;
+      }
+
+      watchId = navigator.geolocation.watchPosition(async (pos) => {
+        try {
+          await fetch(`http://localhost:4000/api/bookings/${id}/location`, {
+            method: 'PATCH',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + localStorage.getItem('rr_token')
+            },
+            body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+          });
+        } catch (e) { console.error('Error sharing location', e); }
+      }, (err) => {
+        console.error(err);
+      }, { enableHighAccuracy: true });
+    }
+
+    document.addEventListener('DOMContentLoaded', loadBookings);
+  </script>
+</body>
+</html>

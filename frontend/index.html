@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Rapid Rescue — India's fastest ambulance booking platform. Book a verified ambulance in under 60 seconds, 24/7." />
+  <meta name="keywords" content="ambulance booking, emergency ambulance, online ambulance, rapid rescue, ambulance India" />
+  <title>Rapid Rescue — Book an Ambulance in 60 Seconds</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════ NAVBAR ═══════════════════════════════════════ -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <div class="brand-icon"><i class="fas fa-truck-medical"></i></div>
+        <span class="brand-text">Rapid<span class="brand-accent">Rescue</span></span>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html" class="nav-link active">Home</a></li>
+        <li><a href="booking.html" class="nav-link">Book Now</a></li>
+        <li><a href="track.html" class="nav-link">Track</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="login.html" class="btn btn-outline">Login</a>
+        <a href="booking.html" class="btn btn-emergency" id="navBookBtn">
+          <i class="fas fa-ambulance"></i> Book Now
+        </a>
+      </div>
+      <button class="hamburger" id="hamburger" aria-label="Toggle Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════ HERO ═══════════════════════════════════════ -->
+  <section class="hero" id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-gradient"></div>
+    <div class="hero-particles" id="particles"></div>
+
+    <div class="hero-container">
+      <!-- LEFT -->
+      <div class="hero-content">
+        <div class="hero-badge">
+          <div class="pulse-dot"></div>
+          <span>Live · 200+ Ambulances Active Now</span>
+        </div>
+        <h1 class="hero-title">
+          Emergency Help,<br>
+          <span class="gradient-text">Arriving in Minutes.</span>
+        </h1>
+        <p class="hero-desc">
+          India's fastest ambulance booking platform. One tap, real-time GPS tracking,
+          verified paramedics — available 24 × 7 across 40+ cities.
+        </p>
+        <div class="hero-cta">
+          <a href="booking.html" class="btn btn-emergency btn-lg" id="heroBookBtn">
+            <i class="fas fa-ambulance"></i> Book Ambulance Now
+          </a>
+          <a href="track.html" class="btn btn-glass btn-lg">
+            <i class="fas fa-location-dot"></i> Track Live
+          </a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <div class="stat-num" data-target="50000">0</div><span class="stat-suffix">+</span>
+            <span class="stat-label">Lives Saved</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <div class="stat-num" data-target="200">0</div><span class="stat-suffix">+</span>
+            <span class="stat-label">Ambulances</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <div class="stat-num" data-target="40">0</div><span class="stat-suffix">+</span>
+            <span class="stat-label">Cities</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <div class="stat-num" data-target="60">0</div><span class="stat-suffix">s</span>
+            <span class="stat-label">Avg. Dispatch</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT — Floating Dispatch Card -->
+      <div class="hero-visual">
+        <div class="hero-card-floating">
+          <div class="dispatch-card glass-card">
+            <div class="dispatch-header">
+              <div class="dispatch-icon"><i class="fas fa-truck-medical"></i></div>
+              <div>
+                <div class="dispatch-title">Ambulance Dispatched</div>
+                <div class="dispatch-sub">Unit #RR-247 · ALS Vehicle</div>
+              </div>
+              <div class="dispatch-live">LIVE</div>
+            </div>
+            <div class="dispatch-progress">
+              <div class="progress-bar"><div class="progress-fill"></div></div>
+              <div class="progress-labels"><span>Dispatched</span><span>En Route</span><span>Arrived</span></div>
+            </div>
+            <div class="dispatch-info">
+              <div class="info-chip"><i class="fas fa-clock"></i> ETA: 4 min</div>
+              <div class="info-chip"><i class="fas fa-star"></i> Paramedic: 4.9★</div>
+              <div class="info-chip"><i class="fas fa-shield-halved"></i> Verified</div>
+            </div>
+          </div>
+
+          <div class="type-cards">
+            <div class="type-mini-card active-type" id="typeBLS">
+              <i class="fas fa-heartbeat" style="color:var(--red-400)"></i>
+              <span>Basic Life Support</span>
+            </div>
+            <div class="type-mini-card" id="typeALS">
+              <i class="fas fa-brain" style="color:#818cf8"></i>
+              <span>Advanced Life</span>
+            </div>
+            <div class="type-mini-card" id="typeNeo">
+              <i class="fas fa-baby" style="color:#60a5fa"></i>
+              <span>Neonatal</span>
+            </div>
+            <div class="type-mini-card" id="typeMort">
+              <i class="fas fa-moon" style="color:#94a3b8"></i>
+              <span>Mortuary</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-scroll-indicator">
+      <div class="scroll-arrow"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════ QUICK BOOK STRIP ═══════════════════════════════════════ -->
+  <div class="quick-book-strip">
+    <div class="strip-container">
+      <div class="strip-icon-box"><i class="fas fa-phone-volume" style="color:white"></i></div>
+      <div class="strip-text">
+        <strong>Emergency Helpline: </strong>
+        <span>Call <a href="tel:+911800001234" style="color:white;font-weight:700">1800-001-234</a> anytime — free 24/7 dispatch support</span>
+      </div>
+      <a href="booking.html" class="btn btn-white-red">Book Online Now</a>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ FOOTER ═══════════════════════════════════════ -->
+  <footer class="footer" id="footer">
+    <div class="footer-bottom">
+      <div class="container">
+        <span>© 2025 RapidRescue Technologies Pvt. Ltd. All rights reserved.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

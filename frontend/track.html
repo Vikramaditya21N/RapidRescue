@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Track your Rapid Rescue ambulance in real-time on a live map." />
+  <title>Track Ambulance | Rapid Rescue</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/track.css" />
+</head>
+<body>
+
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <div class="brand-icon"><i class="fas fa-truck-medical"></i></div>
+        <span class="brand-text">Rapid<span class="brand-accent">Rescue</span></span>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="booking.html" class="nav-link">Book Now</a></li>
+        <li><a href="track.html" class="nav-link active">Track</a></li>
+
+
+      </ul>
+      <div class="nav-actions">
+        <a href="login.html" class="btn btn-outline">Login</a>
+        <a href="register.html" class="btn btn-primary">Get Started</a>
+      </div>
+      <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <div class="container page-header-content">
+      <div class="section-tag">Live Tracking</div>
+      <h1>Track Your <span class="gradient-text">Ambulance</span></h1>
+      <p>Real-time GPS location on an interactive map. Updated every 5 seconds.</p>
+    </div>
+  </div>
+
+  <section class="track-section">
+    <div class="container">
+      <div class="track-layout">
+
+        <!-- LEFT: Info Panel -->
+        <div class="track-info-panel">
+
+          <div class="track-search-card">
+            <h3><i class="fas fa-search" style="color:var(--red-400);margin-right:.5rem"></i>Track Your Booking</h3>
+            <div class="track-input-row">
+              <input type="text" class="track-input" id="trackIdInput" placeholder="e.g. RR-123456" />
+              <button class="btn-track" id="trackBtn"><i class="fas fa-location-dot"></i> Track</button>
+            </div>
+            <button class="btn-gps-locate" id="gpsLocateBtn">
+              <i class="fas fa-location-crosshairs"></i> Use My GPS Location
+            </button>
+          </div>
+
+          <!-- Status Card -->
+          <div class="status-card" id="statusCard">
+            <div class="status-header">
+              <div class="status-amb-icon"><i class="fas fa-ambulance"></i></div>
+              <div>
+                <div class="status-title" id="statusTitle">Ambulance En Route</div>
+                <div class="status-sub" id="statusSub">Booking #RR-000000</div>
+              </div>
+              <div class="status-live-badge">LIVE</div>
+            </div>
+
+            <div class="eta-display">
+              <div class="eta-num" id="etaCountdown">--</div>
+              <div class="eta-unit">minutes estimated arrival</div>
+            </div>
+
+            <div class="status-timeline" id="statusTimeline">
+              <div class="timeline-item">
+                <div class="timeline-dot tl-done"><i class="fas fa-check"></i></div>
+                <div class="timeline-text"><strong>Booking Confirmed</strong><span>Request received & processed</span></div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot tl-done"><i class="fas fa-check"></i></div>
+                <div class="timeline-text"><strong>Ambulance Assigned</strong><span>Nearest unit dispatched</span></div>
+              </div>
+              <div class="timeline-item" id="tlEnRoute">
+                <div class="timeline-dot tl-active"><i class="fas fa-truck-medical"></i></div>
+                <div class="timeline-text"><strong>En Route to You</strong><span>Ambulance is approaching</span></div>
+              </div>
+              <div class="timeline-item" id="tlArrived">
+                <div class="timeline-dot tl-pending"><i class="fas fa-flag"></i></div>
+                <div class="timeline-text"><strong>Arrived at Location</strong><span>Waiting for arrival</span></div>
+              </div>
+            </div>
+
+            <div class="driver-card">
+              <div class="driver-avatar">RK</div>
+              <div class="driver-info">
+                <strong>Ravi Kumar</strong>
+                <span>Paramedic · DL-9823 · ★ 4.9</span>
+              </div>
+              <button class="driver-call" id="callParamedicBtn" title="Call Paramedic">
+                <i class="fas fa-phone"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- No booking msg -->
+          <div id="noBookingMsg" class="no-booking-msg">
+            <i class="fas fa-map-location-dot"></i>
+            <p>Enter your Booking ID or use GPS to see your ambulance on the live map.</p>
+            <a href="booking.html" class="btn btn-outline-red">Book an Ambulance</a>
+          </div>
+        </div>
+
+        <!-- RIGHT: Live Map -->
+        <div class="map-wrapper">
+          <div id="liveMap"></div>
+          <div class="map-live-badge" id="mapLiveBadge">
+            <div class="live-dot"></div>
+            <span>Live GPS · Updates every 5s</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-bottom">
+      <div class="container">
+        <span>© 2025 RapidRescue. All rights reserved.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+
+    // ── Default center (New Delhi) — overridden by GPS
+    let userLat = 28.6139, userLng = 77.2090;
+    let map, userMarker, ambMarker, routeLine;
+    let ambLat, ambLng;
+    let moveInterval = null;
+    let etaSeconds = 0;
+    let etaTimer = null;
+
+    // ── Custom marker icons
+    const ambIcon = L.divIcon({
+      html: `<div style="
+        background:linear-gradient(135deg,#ef4444,#dc2626);
+        width:40px;height:40px;border-radius:50%;
+        display:flex;align-items:center;justify-content:center;
+        font-size:1.1rem;box-shadow:0 0 16px rgba(239,68,68,0.7);
+        border:3px solid white;">🚑</div>`,
+      iconSize: [40, 40], iconAnchor: [20, 20], className: ''
+    });
+
+    const userIcon = L.divIcon({
+      html: `<div style="
+        background:linear-gradient(135deg,#3b82f6,#2563eb);
+        width:36px;height:36px;border-radius:50%;
+        display:flex;align-items:center;justify-content:center;
+        font-size:1rem;box-shadow:0 0 16px rgba(59,130,246,0.7);
+        border:3px solid white;">📍</div>`,
+      iconSize: [36, 36], iconAnchor: [18, 18], className: ''
+    });
+
+    // ── Init Map
+    function initMap(lat, lng) {
+      if (map) { map.remove(); }
+
+      map = L.map('liveMap', {
+        center: [lat, lng],
+        zoom: 15,
+        zoomControl: true,
+        attributionControl: false
+      });
+
+      // Dark tile layer using CartoDB Dark Matter
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        subdomains: 'abcd'
+      }).addTo(map);
+
+      L.control.attribution({ prefix: '© OpenStreetMap · © CARTO' }).addTo(map);
+
+      userMarker = L.marker([lat, lng], { icon: userIcon })
+        .addTo(map)
+        .bindPopup('<b style="color:#e2e8f0">📍 Your Location</b>')
+        .openPopup();
+    }
+
+    // ── Update Ambulance Marker
+    function updateAmbulanceMarker(lat, lng) {
+      ambLat = lat;
+      ambLng = lng;
+
+      if (!ambMarker) {
+        ambMarker = L.marker([lat, lng], { icon: ambIcon })
+          .addTo(map)
+          .bindPopup('<b style="color:#e2e8f0">🚑 Rapid Rescue Ambulance</b><br><span style="color:#94a3b8;font-size:0.82rem">Unit #RR-247</span>');
+        
+        routeLine = L.polyline([[lat, lng], [userLat, userLng]], {
+          color: '#ef4444', weight: 3, opacity: 0.7, dashArray: '8,6'
+        }).addTo(map);
+        
+        map.fitBounds([[lat, lng], [userLat, userLng]], { padding: [40, 40] });
+      } else {
+        ambMarker.setLatLng([lat, lng]);
+        routeLine.setLatLngs([[lat, lng], [userLat, userLng]]);
+      }
+    }
+
+    // ── Poll Booking Status and Location
+    async function pollBooking(id) {
+      if (moveInterval) clearInterval(moveInterval);
+      
+      // Perform an immediate fetch first
+      await fetchAndUpdate(id);
+
+      moveInterval = setInterval(() => fetchAndUpdate(id), 3000);
+    }
+
+    async function fetchAndUpdate(id) {
+      try {
+        const res = await fetch(`http://localhost:4000/api/bookings/${id}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const b = data.booking;
+
+        if (b.status === 'completed') {
+          clearInterval(moveInterval);
+          document.getElementById('statusTitle').textContent = '🟢 Ambulance Arrived!';
+          const enRoute = document.getElementById('tlEnRoute');
+          const arrived = document.getElementById('tlArrived');
+          if (enRoute && arrived) {
+            enRoute.querySelector('.timeline-dot').className = 'timeline-dot tl-done';
+            enRoute.querySelector('.timeline-dot').innerHTML = '<i class="fas fa-check"></i>';
+            arrived.querySelector('.timeline-dot').className = 'timeline-dot tl-active';
+          }
+        } else if (b.status === 'pending') {
+          document.getElementById('statusTitle').textContent = '⏳ Waiting for Provider...';
+        } else {
+          document.getElementById('statusTitle').textContent = 'Ambulance En Route';
+          if (b.provider_lat && b.provider_lng) {
+            updateAmbulanceMarker(b.provider_lat, b.provider_lng);
+            
+            // Basic ETA calculation based on real distance
+            const dist = Math.sqrt(Math.pow((b.provider_lat - userLat) * 111000, 2) + Math.pow((b.provider_lng - userLng) * 111000 * Math.cos(userLat * Math.PI / 180), 2));
+            const etaMins = Math.ceil((dist / 8.3) / 60);
+            if (!isNaN(etaMins) && etaMins > 0) {
+              document.getElementById('etaCountdown').textContent = etaMins.toString().padStart(2, '0');
+            } else {
+              document.getElementById('etaCountdown').textContent = '00';
+            }
+          }
+        }
+      } catch (e) { console.error(e); }
+    }
+
+    // ── Activate full tracking UI
+    async function activateTracking(bookingId) {
+      document.getElementById('noBookingMsg').style.display = 'none';
+      document.getElementById('statusCard').classList.add('visible');
+      document.getElementById('statusSub').textContent = 'Booking #' + bookingId;
+      document.getElementById('mapLiveBadge').style.display = 'flex';
+
+      try {
+        const res = await fetch(`http://localhost:4000/api/bookings/${bookingId}`);
+        const data = await res.json();
+        if (data && data.booking && data.booking.patient_lat && data.booking.patient_lng) {
+          userLat = data.booking.patient_lat;
+          userLng = data.booking.patient_lng;
+        }
+      } catch (e) { console.error('Initial fetch failed', e); }
+
+      if (!map) {
+        initMap(userLat, userLng);
+      }
+      pollBooking(bookingId);
+      showToast('✅ Live tracking activated for ' + bookingId, 'success');
+    }
+
+    // ── GPS Locate Button
+    document.getElementById('gpsLocateBtn').addEventListener('click', () => {
+      const btn = document.getElementById('gpsLocateBtn');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Detecting...';
+      btn.disabled = true;
+
+      if (!navigator.geolocation) {
+        showToast('GPS not supported by your browser.', 'error');
+        btn.innerHTML = '<i class="fas fa-location-crosshairs"></i> Use My GPS Location';
+        btn.disabled = false;
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          userLat = pos.coords.latitude;
+          userLng = pos.coords.longitude;
+          btn.innerHTML = '<i class="fas fa-check-circle"></i> Location Found!';
+          btn.style.color = '#4ade80';
+          setTimeout(() => {
+            btn.innerHTML = '<i class="fas fa-location-crosshairs"></i> Use My GPS Location';
+            btn.style.color = ''; btn.disabled = false;
+          }, 3000);
+
+          if (map) {
+            userMarker.setLatLng([userLat, userLng]);
+            map.setView([userLat, userLng], 15);
+          } else {
+            initMap(userLat, userLng);
+          }
+          showToast('📍 Your real location pinned on map!', 'success');
+        },
+        () => {
+          showToast('Could not get GPS. Using default location.', 'error');
+          btn.innerHTML = '<i class="fas fa-location-crosshairs"></i> Use My GPS Location';
+          btn.style.color = ''; btn.disabled = false;
+          if (!map) initMap(userLat, userLng);
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    });
+
+    // ── Track Button
+    document.getElementById('trackBtn').addEventListener('click', () => {
+      const id = document.getElementById('trackIdInput').value.trim().toUpperCase();
+      if (!id || !id.startsWith('RR-')) {
+        showToast('Please enter a valid Booking ID (e.g. RR-123456)', 'error');
+        return;
+      }
+      if (!map) initMap(userLat, userLng);
+      activateTracking(id);
+    });
+
+    // ── Call Paramedic
+    document.getElementById('callParamedicBtn').addEventListener('click', () => {
+      showToast('📞 Calling paramedic Ravi Kumar...', 'info');
+    });
+
+    // ── Auto-load from localStorage or URL param
+    const urlId = new URLSearchParams(window.location.search).get('id');
+    const stored = JSON.parse(localStorage.getItem('rr_booking') || '{}');
+    const prefillId = urlId || stored.id || '';
+
+    if (prefillId) {
+      document.getElementById('trackIdInput').value = prefillId;
+      // Try GPS first, then fallback
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            userLat = pos.coords.latitude;
+            userLng = pos.coords.longitude;
+            activateTracking(prefillId);
+          },
+          () => {
+            activateTracking(prefillId);
+          },
+          { enableHighAccuracy: true, timeout: 8000 }
+        );
+      } else {
+        activateTracking(prefillId);
+      }
+    } else {
+      // Show default map silently
+      initMap(userLat, userLng);
+    }
+  });
+  </script>
+</body>
+</html>

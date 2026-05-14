@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Login to your Rapid Rescue account." />
+    <title>Login | Rapid Rescue</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="css/login.css" />
+</head>
+
+<body class="auth-page-body">
+    <nav class="navbar scrolled"
+        style="background:rgba(10,10,15,0.9);backdrop-filter:blur(20px);border-bottom:var(--border-glass)">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <div class="brand-icon"><i class="fas fa-ambulance"></i></div>
+                <span class="brand-text">Rapid<span class="brand-accent">Rescue</span></span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="auth-card">
+        <div class="auth-logo">
+            <div class="brand-icon"><i class="fas fa-ambulance"></i></div>
+            <span class="brand-text">Rapid<span class="brand-accent">Rescue</span></span>
+        </div>
+        <h1 class="auth-title">Welcome back</h1>
+        <p class="auth-sub">Sign in to manage your bookings and health profile</p>
+
+        <div class="emergency-strip">
+            <i class="fas fa-circle-exclamation"></i>
+            <span>Emergency? Don't wait — <a href="booking.html">Book instantly without login</a></span>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="loginEmail">Email / Mobile Number</label>
+            <div class="input-wrapper">
+                <i class="fas fa-envelope input-icon"></i>
+                <input type="text" id="loginEmail" class="form-input" placeholder="you@example.com or +91 98765..." />
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="loginPassword">Password</label>
+            <div class="input-wrapper">
+                <i class="fas fa-lock input-icon"></i>
+                <input type="password" id="loginPassword" class="form-input" placeholder="Enter password" />
+                <button class="toggle-pw" id="togglePw" type="button" aria-label="Toggle password"><i
+                        class="fas fa-eye"></i></button>
+            </div>
+            <a class="forgot-link" id="forgotLink">Forgot password?</a>
+        </div>
+
+        <button class="btn-auth" id="loginBtn" type="button">Sign In</button>
+
+        <div class="divider"><span>or continue with</span></div>
+        <div class="social-auths">
+            <button class="social-auth-btn" id="googleAuthBtn"><i class="fab fa-google"></i> Google</button>
+            <button class="social-auth-btn" id="phoneAuthBtn"><i class="fas fa-mobile-screen-button"></i> OTP</button>
+        </div>
+
+        <div class="auth-footer">
+            Don't have an account? <a href="register.html">Create one free</a>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        const passwordInput = document.getElementById('loginPassword');
+        const togglePasswordButton = document.getElementById('togglePw');
+        
+        if (togglePasswordButton) {
+            togglePasswordButton.addEventListener('click', function () {
+                const iconElement = this.querySelector('i');
+                const isPasswordHidden = passwordInput.type === 'password';
+                
+                if (isPasswordHidden) {
+                    passwordInput.type = 'text';
+                    iconElement.className = 'fas fa-eye-slash';
+                } else {
+                    passwordInput.type = 'password';
+                    iconElement.className = 'fas fa-eye';
+                }
+            });
+        }
+
+        const loginButton = document.getElementById('loginBtn');
+        
+        if (loginButton) {
+            loginButton.addEventListener('click', async () => {
+                const emailInput = document.getElementById('loginEmail');
+                const passwordInput = document.getElementById('loginPassword');
+                
+                const emailAddress = emailInput.value.trim();
+                const userPassword = passwordInput.value;
+                
+                const isMissingCredentials = !emailAddress || !userPassword;
+                if (isMissingCredentials) {
+                    showToast('Please enter email and password.', 'error');
+                    return;
+                }
+                
+                loginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+                loginButton.disabled = true;
+                
+                try {
+                    const authenticationRequest = {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: emailAddress, password: userPassword })
+                    };
+                    
+                    const serverResponse = await fetch('http://localhost:4000/api/auth/login', authenticationRequest);
+                    const responseData = await serverResponse.json();
+                    
+                    if (!serverResponse.ok) {
+                        throw new Error(responseData.error || 'Login failed.');
+                    }
+                    
+                    localStorage.setItem('rr_token', responseData.token);
+                    localStorage.setItem('rr_user', JSON.stringify(responseData.user));
+                    
+                    showToast(`Welcome back, ${responseData.user.name}! 🚑`, 'success');
+                    
+                    setTimeout(() => {
+                        window.location.href = responseData.user.role === 'provider' ? 'admin.html' : 'index.html';
+                    }, 1200);
+                    
+                } catch (error) {
+                    showToast(error.message, 'error');
+                    loginButton.innerHTML = 'Sign In';
+                    loginButton.disabled = false;
+                }
+            });
+        }
+
+        const forgotPasswordLink = document.getElementById('forgotLink');
+        if (forgotPasswordLink) {
+            forgotPasswordLink.addEventListener('click', () => {
+                showToast('Password reset email sent!', 'info');
+            });
+        }
+
+        const googleLoginButton = document.getElementById('googleAuthBtn');
+        if (googleLoginButton) {
+            googleLoginButton.addEventListener('click', () => {
+                showToast('Google sign-in coming soon!', 'info');
+            });
+        }
+
+        const phoneLoginButton = document.getElementById('phoneAuthBtn');
+        if (phoneLoginButton) {
+            phoneLoginButton.addEventListener('click', () => {
+                window.location.href = 'register.html';
+            });
+        }
+    </script>
+</body>
+
+</html>
