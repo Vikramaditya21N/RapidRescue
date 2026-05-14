@@ -1,99 +1,76 @@
-# 🚑 Rapid Rescue — Ambulance Booking System
+# 🚑 Rapid Rescue
 
-India's fastest ambulance booking platform (frontend prototype).  
-Built with plain HTML, CSS, and JavaScript — no frameworks needed.
-
----
-
-## 📁 Project Structure
-
-```
-ambulance/
-│
-├── index.html          ← Homepage (landing page)
-├── booking.html        ← Book an ambulance (3-step form)
-├── track.html          ← Live GPS tracking map
-├── about.html          ← About us page
-├── contact.html        ← Contact form
-├── login.html          ← User login
-├── register.html       ← User registration
-│
-├── css/
-│   ├── style.css       ← Main design system (colors, navbar, buttons, etc.)
-│   └── booking.css     ← Styles specific to the booking form
-│
-├── js/
-│   ├── main.js         ← Shared JS (navbar, animations, toast notifications)
-│   └── booking.js      ← Booking form logic (steps, GPS, dispatch)
-│
-└── README.md           ← This file
-```
+**Rapid Rescue** is a modern, full-stack online ambulance booking and live-tracking platform built as a final-year academic project. It provides a seamless, Uber-like experience for patients to request emergency medical transport, and a robust admin dashboard for providers to dispatch units and track them in real-time.
 
 ---
 
-## 🚀 How to Run Locally (with GPS support)
+## ✨ Key Features
 
-> ⚠️ GPS / Geolocation does NOT work if you open files directly.  
-> You MUST run a local server.
-
-### Option 1 — Python (easiest)
-```bash
-cd ambulance
-python -m http.server 5500
-```
-Then open: **http://localhost:5500**
-
-### Option 2 — VS Code
-Install the **Live Server** extension → Right-click `index.html` → **Open with Live Server**
+- **Role-Based Access Control:** Separate JWT-secured authentication flows for Patients and Ambulance Providers.
+- **Real-Time GPS Tracking:** Bi-directional live location tracking using the HTML5 Geolocation API, polling architecture, and Leaflet Maps.
+- **Automated Email Alerts:** Integrated with Nodemailer to instantly email patients their booking confirmation and ETA upon dispatch.
+- **Dynamic Pricing Engine:** Calculates base fare + per-kilometer distance based on ambulance type (Basic, Advanced, Neonatal, Mortuary).
+- **Payment Gateway Integration:** Mock Razorpay checkout flow for "Pay Online" functionality.
+- **Provider Dashboard:** Live MongoDB metrics for active dispatches and pending requests.
 
 ---
 
-## 📄 Pages Overview
+## 🛠️ Technology Stack
 
-| Page | URL | Description |
-|------|-----|-------------|
-| Home | `/index.html` | Landing page with hero, types, testimonials |
-| Book | `/booking.html` | 3-step ambulance booking form |
-| Track | `/track.html` | Live map with simulated ambulance movement |
-| About | `/about.html` | Company story, team, values |
-| Contact | `/contact.html` | Contact form |
-| Login | `/login.html` | User login |
-| Register | `/register.html` | New user registration |
+**Frontend:**
+- HTML5, Vanilla CSS, Vanilla JavaScript
+- Leaflet.js (for map rendering & GPS tracking)
+- Razorpay Checkout API (Test Mode)
 
----
-
-## ⚙️ Features
-
-- 🌙 Dark theme with glassmorphism design
-- 📍 GPS location detection for pickup
-- 🗺️ Real interactive map (Leaflet.js + OpenStreetMap)
-- 🚑 Simulated ambulance movement with live ETA countdown
-- 📋 3-step booking form with validation
-- 💳 Payment method selection (UPI / Cash / Insurance)
-- 🔔 Toast notifications
-- 📱 Fully responsive (mobile-friendly)
+**Backend:**
+- Node.js & Express.js
+- MongoDB (via Mongoose schemas)
+- JWT (JSON Web Tokens) & bcrypt (Security/Auth)
+- Nodemailer (Automated Emails)
 
 ---
 
-## 🛠️ Tech Stack
+## 🚀 How to Run Locally
 
-| Technology | Purpose |
-|------------|---------|
-| HTML5 | Page structure |
-| CSS3 (Vanilla) | Styling & animations |
-| JavaScript (Vanilla) | UI logic & interactivity |
-| Leaflet.js | Interactive map |
-| OpenStreetMap | Free map tiles |
-| Font Awesome | Icons |
-| Google Fonts | Typography (Inter + Outfit) |
+### 1. Prerequisites
+- [Node.js](https://nodejs.org/) installed
+- A running MongoDB Atlas cluster (or local MongoDB instance)
+
+### 2. Backend Setup
+1. Open your terminal and navigate to the backend folder:
+   ```bash
+   cd backend
+   ```
+2. Install the necessary dependencies:
+   ```bash
+   npm install
+   ```
+3. Create a `.env` file in the `backend` folder and add your environment variables:
+   ```env
+   PORT=4000
+   JWT_SECRET=your_super_secret_key
+   MONGO_URI=your_mongodb_connection_string
+   ```
+4. Start the server:
+   ```bash
+   node server.js
+   ```
+
+### 3. Frontend Setup
+The frontend is built with vanilla HTML/CSS/JS. To avoid CORS issues, do not open the files directly via `file:///`. Instead, run them through a local development server:
+1. You can use the **Live Server** extension in VS Code.
+2. Right-click on `index.html` and select "Open with Live Server" (usually runs on port 5500).
 
 ---
 
-## 📌 Note
-
-This is a **frontend prototype**. Bookings are simulated — no real ambulance is dispatched.  
-To go fully live, a backend (Node.js + database) and a driver mobile app are needed.
+## 📱 System Architecture Flow
+1. **Patient** logs in, selects an ambulance type, and submits their exact GPS coordinates.
+2. The **Backend** calculates estimated distance and pricing, and stores the booking in MongoDB with a `pending` status.
+3. The **Provider** logs into the Admin Dashboard, reviews pending requests, and clicks "Accept".
+4. The Backend triggers **Nodemailer** to send a live tracking link to the patient.
+5. The Provider clicks "Drive," pushing their phone's live GPS coordinates to the server via the Geolocation API.
+6. The Patient's tracking map (`track.html`) polls the backend to dynamically move the ambulance marker toward their location.
 
 ---
 
-© 2025 Rapid Rescue Technologies Pvt. Ltd.
+*Built for academic presentation purposes.*
