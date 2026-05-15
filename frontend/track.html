@@ -139,6 +139,7 @@
     </div>
   </footer>
 
+  <script src="js/config.js"></script>
   <script src="js/main.js"></script>
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -232,7 +233,7 @@
 
     async function fetchAndUpdate(id) {
       try {
-        const res = await fetch(`http://localhost:4000/api/bookings/${id}`);
+        const res = await fetch(`${API_BASE_URL}/bookings/${id}`);
         if (!res.ok) return;
         const data = await res.json();
         const b = data.booking;
@@ -275,7 +276,7 @@
       document.getElementById('mapLiveBadge').style.display = 'flex';
 
       try {
-        const res = await fetch(`http://localhost:4000/api/bookings/${bookingId}`);
+        const res = await fetch(`${API_BASE_URL}/bookings/${bookingId}`);
         const data = await res.json();
         if (data && data.booking && data.booking.patient_lat && data.booking.patient_lng) {
           userLat = data.booking.patient_lat;

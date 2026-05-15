@@ -71,6 +71,7 @@
         </div>
     </div>
 
+    <script src="js/config.js"></script>
     <script src="js/main.js"></script>
     <script>
         const passwordInput = document.getElementById('loginPassword');
@@ -117,7 +118,7 @@
                         body: JSON.stringify({ email: emailAddress, password: userPassword })
                     };
                     
-                    const serverResponse = await fetch('http://localhost:4000/api/auth/login', authenticationRequest);
+                    const serverResponse = await fetch(`${API_BASE_URL}/auth/login`, authenticationRequest);
                     const responseData = await serverResponse.json();
                     
                     if (!serverResponse.ok) {

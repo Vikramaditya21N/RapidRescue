@@ -244,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const processBooking = async () => {
         try {
-          const backendResponse = await fetch('http://localhost:4000/api/bookings', {
+          const backendResponse = await fetch(`${API_BASE_URL}/bookings`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newBookingPayload)
