@@ -143,21 +143,51 @@
         const otpSection = document.getElementById('otpSection');
         const firstOtpInput = document.getElementById('otp1');
 
-        if (sendOtpButton && phoneInput && otpSection) {
-            sendOtpButton.addEventListener('click', () => {
+        const emailInputForOtp = document.getElementById('regEmail');
+
+        if (sendOtpButton && phoneInput && otpSection && emailInputForOtp) {
+            sendOtpButton.addEventListener('click', async () => {
+                const emailAddress = emailInputForOtp.value.trim();
                 const phoneNumber = phoneInput.value.trim();
                 
-                const isPhoneNumberMissing = !phoneNumber;
-                if (isPhoneNumberMissing) {
-                    showToast('Enter your phone number first.', 'error');
+                if (!emailAddress) {
+                    showToast('Enter your email first to receive OTP.', 'error');
                     return;
                 }
                 
-                otpSection.classList.add('visible');
-                showToast(`OTP sent to ${phoneNumber}`, 'success');
+                if (!phoneNumber) {
+                    showToast('Enter your phone number.', 'error');
+                    return;
+                }
                 
-                if (firstOtpInput) {
-                    firstOtpInput.focus();
+                sendOtpButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                sendOtpButton.disabled = true;
+
+                try {
+                    const otpRequest = {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: emailAddress })
+                    };
+                    
+                    const serverResponse = await fetch(`${API_BASE_URL}/auth/send-otp`, otpRequest);
+                    const responseData = await serverResponse.json();
+                    
+                    if (!serverResponse.ok) {
+                        throw new Error(responseData.error || 'Failed to send OTP.');
+                    }
+
+                    otpSection.classList.add('visible');
+                    showToast(`OTP sent to your email! (Check terminal logs)`, 'success');
+                    
+                    if (firstOtpInput) {
+                        firstOtpInput.focus();
+                    }
+                } catch (error) {
+                    showToast(error.message, 'error');
+                } finally {
+                    sendOtpButton.innerHTML = 'Send OTP';
+                    sendOtpButton.disabled = false;
                 }
             });
         }
@@ -247,9 +277,13 @@
                 const userRole = roleInput ? roleInput.value : 'patient';
                 const isTermsAccepted = termsCheckbox.checked;
                 
-                const isMissingRequiredFields = !firstName || !emailAddress || !phoneNumber || !userPassword;
+                const otpInputs = document.querySelectorAll('.otp-input');
+                let otpValue = '';
+                otpInputs.forEach(input => { otpValue += input.value; });
+                
+                const isMissingRequiredFields = !firstName || !emailAddress || !phoneNumber || !userPassword || otpValue.length < 6;
                 if (isMissingRequiredFields) {
-                    showToast('Please fill all required fields.', 'error');
+                    showToast('Please fill all required fields and enter the 6-digit OTP.', 'error');
                     return;
                 }
                 
@@ -277,7 +311,8 @@
                             email: emailAddress,
                             phone: phoneNumber,
                             password: userPassword,
-                            role: userRole
+                            role: userRole,
+                            otp: otpValue
                         })
                     };
                     

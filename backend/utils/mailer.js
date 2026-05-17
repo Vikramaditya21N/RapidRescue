@@ -5,22 +5,26 @@ const nodemailer = require('nodemailer');
 // If you want to use REAL Gmail, replace host, port, auth with:
 // service: 'gmail', auth: { user: 'your-email@gmail.com', pass: 'your-app-password' }
 
+async function getTransporter() {
+  // Generate a test account automatically
+  const testAccount = await nodemailer.createTestAccount();
+
+  return nodemailer.createTransport({
+    host: "smtp.ethereal.email",
+    port: 587,
+    secure: false,
+    auth: {
+      user: testAccount.user,
+      pass: testAccount.pass,
+    },
+  });
+}
+
 async function sendDispatchEmail(patientEmail, patientName, bookingId, eta) {
   if (!patientEmail) return;
 
   try {
-    // Generate a test account automatically
-    const testAccount = await nodemailer.createTestAccount();
-
-    const transporter = nodemailer.createTransport({
-      host: "smtp.ethereal.email",
-      port: 587,
-      secure: false,
-      auth: {
-        user: testAccount.user,
-        pass: testAccount.pass,
-      },
-    });
+    const transporter = await getTransporter();
 
     const mailOptions = {
       from: '"Rapid Rescue Dispatch" <dispatch@rapidrescue.com>',
@@ -66,3 +70,41 @@ async function sendDispatchEmail(patientEmail, patientName, bookingId, eta) {
 }
 
 module.exports = { sendDispatchEmail };
+
+async function sendOtpEmail(email, otp) {
+  if (!email) return;
+
+  try {
+    const transporter = await getTransporter();
+
+    const mailOptions = {
+      from: '"Rapid Rescue Accounts" <accounts@rapidrescue.com>',
+      to: email,
+      subject: `Your OTP for Rapid Rescue: ${otp}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
+          <div style="background-color: #ef4444; color: white; padding: 20px; text-align: center;">
+            <h1 style="margin: 0; font-size: 24px;">Verification Code</h1>
+          </div>
+          <div style="padding: 20px; background-color: #f8fafc; text-align: center;">
+            <p>Your One-Time Password (OTP) for Rapid Rescue registration is:</p>
+            <h2 style="font-size: 36px; letter-spacing: 5px; color: #333; background: #e2e8f0; padding: 10px; border-radius: 5px; display: inline-block;">${otp}</h2>
+            <p style="color: #64748b; margin-top: 20px;">This OTP is valid for 10 minutes. Please do not share it with anyone.</p>
+          </div>
+        </div>
+      `
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log("-----------------------------------------");
+    console.log("✉️  OTP EMAIL SENT SUCCESSFULLY!");
+    console.log("To view the OTP email, click this link:");
+    console.log(nodemailer.getTestMessageUrl(info));
+    console.log("-----------------------------------------");
+    
+  } catch (error) {
+    console.error("Error sending OTP email:", error);
+  }
+}
+
+module.exports = { sendDispatchEmail, sendOtpEmail };
