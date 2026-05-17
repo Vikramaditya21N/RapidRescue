@@ -41,32 +41,30 @@
         </div>
 
         <div class="form-group">
-            <label class="form-label" for="loginEmail">Email / Mobile Number</label>
-            <div class="input-wrapper">
-                <i class="fas fa-envelope input-icon"></i>
-                <input type="text" id="loginEmail" class="form-input" placeholder="you@example.com or +91 98765..." />
+            <label class="form-label" for="loginPhone">Mobile Number *</label>
+            <div class="input-wrapper" style="display:flex;gap:.5rem">
+                <i class="fas fa-phone input-icon" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-gray);"></i>
+                <input type="tel" id="loginPhone" class="form-input" style="padding-left: 2.5rem;" placeholder="+91 98765 43210" required />
+                <button class="btn btn-outline-red" id="sendLoginOtpBtn" type="button"
+                    style="flex-shrink:0;border-radius:var(--radius-md);padding:.5rem 1rem;font-size:.82rem;">Send OTP</button>
             </div>
         </div>
-        <div class="form-group">
-            <label class="form-label" for="loginPassword">Password</label>
-            <div class="input-wrapper">
-                <i class="fas fa-lock input-icon"></i>
-                <input type="password" id="loginPassword" class="form-input" placeholder="Enter password" />
-                <button class="toggle-pw" id="togglePw" type="button" aria-label="Toggle password"><i
-                        class="fas fa-eye"></i></button>
+
+        <div class="otp-section" id="loginOtpSection" style="display: none; margin-bottom: 1.5rem;">
+            <label class="form-label">Enter OTP sent to your number</label>
+            <div class="otp-strip" style="display: flex; gap: 0.5rem; justify-content: space-between;">
+                <input type="text" maxlength="1" class="otp-input login-otp-input" id="lotp1" style="width: 2.5rem; height: 3rem; text-align: center; border-radius: var(--radius-md); border: 1px solid var(--border-glass); background: rgba(255,255,255,0.05); color: white; font-size: 1.2rem;" />
+                <input type="text" maxlength="1" class="otp-input login-otp-input" id="lotp2" style="width: 2.5rem; height: 3rem; text-align: center; border-radius: var(--radius-md); border: 1px solid var(--border-glass); background: rgba(255,255,255,0.05); color: white; font-size: 1.2rem;" />
+                <input type="text" maxlength="1" class="otp-input login-otp-input" id="lotp3" style="width: 2.5rem; height: 3rem; text-align: center; border-radius: var(--radius-md); border: 1px solid var(--border-glass); background: rgba(255,255,255,0.05); color: white; font-size: 1.2rem;" />
+                <input type="text" maxlength="1" class="otp-input login-otp-input" id="lotp4" style="width: 2.5rem; height: 3rem; text-align: center; border-radius: var(--radius-md); border: 1px solid var(--border-glass); background: rgba(255,255,255,0.05); color: white; font-size: 1.2rem;" />
+                <input type="text" maxlength="1" class="otp-input login-otp-input" id="lotp5" style="width: 2.5rem; height: 3rem; text-align: center; border-radius: var(--radius-md); border: 1px solid var(--border-glass); background: rgba(255,255,255,0.05); color: white; font-size: 1.2rem;" />
+                <input type="text" maxlength="1" class="otp-input login-otp-input" id="lotp6" style="width: 2.5rem; height: 3rem; text-align: center; border-radius: var(--radius-md); border: 1px solid var(--border-glass); background: rgba(255,255,255,0.05); color: white; font-size: 1.2rem;" />
             </div>
-            <a class="forgot-link" id="forgotLink">Forgot password?</a>
         </div>
 
-        <button class="btn-auth" id="loginBtn" type="button">Sign In</button>
+        <button class="btn-auth" id="loginBtn" type="button" disabled style="opacity: 0.5; cursor: not-allowed;">Sign In</button>
 
-        <div class="divider"><span>or continue with</span></div>
-        <div class="social-auths">
-            <button class="social-auth-btn" id="googleAuthBtn"><i class="fab fa-google"></i> Google</button>
-            <button class="social-auth-btn" id="phoneAuthBtn"><i class="fas fa-mobile-screen-button"></i> OTP</button>
-        </div>
-
-        <div class="auth-footer">
+        <div class="auth-footer" style="margin-top: 1.5rem;">
             Don't have an account? <a href="register.html">Create one free</a>
         </div>
     </div>
@@ -74,51 +72,96 @@
     <script src="js/config.js"></script>
     <script src="js/main.js"></script>
     <script>
-        const passwordInput = document.getElementById('loginPassword');
-        const togglePasswordButton = document.getElementById('togglePw');
-        
-        if (togglePasswordButton) {
-            togglePasswordButton.addEventListener('click', function () {
-                const iconElement = this.querySelector('i');
-                const isPasswordHidden = passwordInput.type === 'password';
+        const sendOtpButton = document.getElementById('sendLoginOtpBtn');
+        const phoneInput = document.getElementById('loginPhone');
+        const otpSection = document.getElementById('loginOtpSection');
+        const loginButton = document.getElementById('loginBtn');
+        const otpInputs = document.querySelectorAll('.login-otp-input');
+
+        if (sendOtpButton && phoneInput && otpSection) {
+            sendOtpButton.addEventListener('click', async () => {
+                const phoneNumber = phoneInput.value.trim();
                 
-                if (isPasswordHidden) {
-                    passwordInput.type = 'text';
-                    iconElement.className = 'fas fa-eye-slash';
-                } else {
-                    passwordInput.type = 'password';
-                    iconElement.className = 'fas fa-eye';
+                if (!phoneNumber) {
+                    showToast('Enter your mobile number first.', 'error');
+                    return;
+                }
+                
+                sendOtpButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                sendOtpButton.disabled = true;
+
+                try {
+                    const otpRequest = {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone: phoneNumber })
+                    };
+                    
+                    const serverResponse = await fetch(`${API_BASE_URL}/auth/send-login-otp`, otpRequest);
+                    const responseData = await serverResponse.json();
+                    
+                    if (!serverResponse.ok) {
+                        throw new Error(responseData.error || 'Failed to send OTP.');
+                    }
+
+                    otpSection.style.display = 'block';
+                    loginButton.disabled = false;
+                    loginButton.style.opacity = '1';
+                    loginButton.style.cursor = 'pointer';
+                    
+                    showToast('OTP sent via SMS!', 'success');
+                    
+                    if (otpInputs.length > 0) {
+                        otpInputs[0].focus();
+                    }
+                } catch (error) {
+                    showToast(error.message, 'error');
+                } finally {
+                    sendOtpButton.innerHTML = 'Send OTP';
+                    sendOtpButton.disabled = false;
                 }
             });
         }
 
-        const loginButton = document.getElementById('loginBtn');
-        
+        // OTP input behavior
+        otpInputs.forEach((currentInput, currentIndex) => {
+            currentInput.addEventListener('input', () => {
+                const isValueEntered = currentInput.value;
+                const nextInputExists = otpInputs[currentIndex + 1];
+                if (isValueEntered && nextInputExists) {
+                    otpInputs[currentIndex + 1].focus();
+                }
+            });
+            
+            currentInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Backspace' && !currentInput.value && otpInputs[currentIndex - 1]) {
+                    otpInputs[currentIndex - 1].focus();
+                }
+            });
+        });
+
         if (loginButton) {
             loginButton.addEventListener('click', async () => {
-                const emailInput = document.getElementById('loginEmail');
-                const passwordInput = document.getElementById('loginPassword');
+                const phoneNumber = phoneInput.value.trim();
+                let otpValue = '';
+                otpInputs.forEach(input => { otpValue += input.value; });
                 
-                const emailAddress = emailInput.value.trim();
-                const userPassword = passwordInput.value;
-                
-                const isMissingCredentials = !emailAddress || !userPassword;
-                if (isMissingCredentials) {
-                    showToast('Please enter email and password.', 'error');
+                if (!phoneNumber || otpValue.length < 6) {
+                    showToast('Please enter your phone number and the 6-digit OTP.', 'error');
                     return;
                 }
                 
-                loginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+                loginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
                 loginButton.disabled = true;
                 
                 try {
                     const authenticationRequest = {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: emailAddress, password: userPassword })
+                        body: JSON.stringify({ phone: phoneNumber, otp: otpValue })
                     };
                     
-                    const serverResponse = await fetch(`${API_BASE_URL}/auth/login`, authenticationRequest);
+                    const serverResponse = await fetch(`${API_BASE_URL}/auth/login-with-otp`, authenticationRequest);
                     const responseData = await serverResponse.json();
                     
                     if (!serverResponse.ok) {
@@ -139,27 +182,6 @@
                     loginButton.innerHTML = 'Sign In';
                     loginButton.disabled = false;
                 }
-            });
-        }
-
-        const forgotPasswordLink = document.getElementById('forgotLink');
-        if (forgotPasswordLink) {
-            forgotPasswordLink.addEventListener('click', () => {
-                showToast('Password reset email sent!', 'info');
-            });
-        }
-
-        const googleLoginButton = document.getElementById('googleAuthBtn');
-        if (googleLoginButton) {
-            googleLoginButton.addEventListener('click', () => {
-                showToast('Google sign-in coming soon!', 'info');
-            });
-        }
-
-        const phoneLoginButton = document.getElementById('phoneAuthBtn');
-        if (phoneLoginButton) {
-            phoneLoginButton.addEventListener('click', () => {
-                window.location.href = 'register.html';
             });
         }
     </script>

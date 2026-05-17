@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { sendOtpEmail } = require('../utils/mailer');
+const { sendSms } = require('../utils/sms');
 
 const router = express.Router();
 
@@ -108,24 +109,67 @@ router.post('/register', async (request, response) => {
   }
 });
 
-router.post('/login', async (request, response) => {
+router.post('/send-login-otp', async (request, response) => {
   try {
-    const { email, password } = request.body;
-
-    const missingRequiredFields = !email || !password;
-    if (missingRequiredFields) {
-      return response.status(400).json({ error: 'Email and password are required.' });
+    const { phone } = request.body;
+    
+    if (!phone) {
+      return response.status(400).json({ error: 'Mobile number is required to send OTP.' });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ phone });
     if (!user) {
-      return response.status(404).json({ error: 'No account found with this email.' });
+      return response.status(404).json({ error: 'No account found with this mobile number.' });
     }
 
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
-    if (!isPasswordCorrect) {
-      return response.status(401).json({ error: 'Incorrect password.' });
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Store in memory for 10 minutes
+    otpCache.set(phone, {
+      otp,
+      expiresAt: Date.now() + 10 * 60 * 1000
+    });
+
+    const message = `Your One-Time Password (OTP) for Rapid Rescue login is: ${otp}. Do not share this with anyone.`;
+    await sendSms(phone, message);
+    
+    response.json({ message: 'OTP sent successfully via SMS.' });
+  } catch (error) {
+    console.error(error);
+    response.status(500).json({ error: 'Server error while sending SMS OTP.' });
+  }
+});
+
+router.post('/login-with-otp', async (request, response) => {
+  try {
+    const { phone, otp } = request.body;
+
+    if (!phone || !otp) {
+      return response.status(400).json({ error: 'Mobile number and OTP are required.' });
     }
+
+    // Verify OTP
+    const cachedOtpData = otpCache.get(phone);
+    if (!cachedOtpData) {
+      return response.status(400).json({ error: 'Please request an OTP first.' });
+    }
+    
+    if (Date.now() > cachedOtpData.expiresAt) {
+      otpCache.delete(phone);
+      return response.status(400).json({ error: 'OTP has expired. Please request a new one.' });
+    }
+    
+    if (cachedOtpData.otp !== otp) {
+      return response.status(400).json({ error: 'Invalid OTP.' });
+    }
+
+    const user = await User.findOne({ phone });
+    if (!user) {
+      return response.status(404).json({ error: 'No account found with this mobile number.' });
+    }
+
+    // Clear OTP after successful login
+    otpCache.delete(phone);
 
     const token = generateAuthenticationToken(user);
 
@@ -142,7 +186,7 @@ router.post('/login', async (request, response) => {
     });
   } catch (error) {
     console.error(error);
-    response.status(500).json({ error: 'Server error during login.' });
+    response.status(500).json({ error: 'Server error during OTP login.' });
   }
 });
 
