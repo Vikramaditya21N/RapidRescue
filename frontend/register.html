@@ -68,8 +68,10 @@
         <div class="form-group">
             <label class="form-label">Account Type *</label>
             <div style="display:flex;gap:1rem;margin-bottom:1rem">
-                <label style="color:var(--text-white);font-size:0.9rem"><input type="radio" name="regRole" value="patient" checked> Patient</label>
-                <label style="color:var(--text-white);font-size:0.9rem"><input type="radio" name="regRole" value="provider"> Ambulance Provider</label>
+                <label style="color:var(--text-white);font-size:0.9rem"><input type="radio" name="regRole"
+                        value="patient" checked> Patient</label>
+                <label style="color:var(--text-white);font-size:0.9rem"><input type="radio" name="regRole"
+                        value="provider"> Ambulance Provider</label>
             </div>
         </div>
         <div class="form-group">
@@ -149,17 +151,17 @@
             sendOtpButton.addEventListener('click', async () => {
                 const emailAddress = emailInputForOtp.value.trim();
                 const phoneNumber = phoneInput.value.trim();
-                
+
                 if (!emailAddress) {
                     showToast('Enter your email first to receive OTP.', 'error');
                     return;
                 }
-                
+
                 if (!phoneNumber) {
                     showToast('Enter your phone number.', 'error');
                     return;
                 }
-                
+
                 sendOtpButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 sendOtpButton.disabled = true;
 
@@ -167,19 +169,19 @@
                     const otpRequest = {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: emailAddress })
+                        body: JSON.stringify({ phone: phoneNumber })
                     };
-                    
+
                     const serverResponse = await fetch(`${API_BASE_URL}/auth/send-otp`, otpRequest);
                     const responseData = await serverResponse.json();
-                    
+
                     if (!serverResponse.ok) {
                         throw new Error(responseData.error || 'Failed to send OTP.');
                     }
 
                     otpSection.classList.add('visible');
-                    showToast(`OTP sent to your email! (Check terminal logs)`, 'success');
-                    
+                    showToast(`OTP sent via SMS!`, 'success');
+
                     if (firstOtpInput) {
                         firstOtpInput.focus();
                     }
@@ -193,22 +195,22 @@
         }
 
         const allOtpInputs = document.querySelectorAll('.otp-input');
-        
+
         allOtpInputs.forEach((currentInput, currentIndex) => {
             currentInput.addEventListener('input', () => {
                 const isValueEntered = currentInput.value;
                 const nextInputExists = allOtpInputs[currentIndex + 1];
-                
+
                 if (isValueEntered && nextInputExists) {
                     allOtpInputs[currentIndex + 1].focus();
                 }
             });
-            
+
             currentInput.addEventListener('keydown', (event) => {
                 const isBackspacePressed = event.key === 'Backspace';
                 const isEmptyField = !currentInput.value;
                 const previousInputExists = allOtpInputs[currentIndex - 1];
-                
+
                 if (isBackspacePressed && isEmptyField && previousInputExists) {
                     allOtpInputs[currentIndex - 1].focus();
                 }
@@ -216,40 +218,40 @@
         });
 
         const passwordInput = document.getElementById('regPassword');
-        
+
         if (passwordInput) {
             passwordInput.addEventListener('input', function () {
                 const currentPassword = this.value;
                 const strengthBars = [
-                    document.getElementById('sb1'), 
-                    document.getElementById('sb2'), 
-                    document.getElementById('sb3'), 
+                    document.getElementById('sb1'),
+                    document.getElementById('sb2'),
+                    document.getElementById('sb3'),
                     document.getElementById('sb4')
                 ];
-                
+
                 let passwordStrengthScore = 0;
-                
+
                 const isMinimumLength = currentPassword.length >= 6;
                 if (isMinimumLength) passwordStrengthScore++;
-                
+
                 const isGoodLength = currentPassword.length >= 10;
                 if (isGoodLength) passwordStrengthScore++;
-                
+
                 const hasUppercaseAndNumbers = /[A-Z]/.test(currentPassword) && /[0-9]/.test(currentPassword);
                 if (hasUppercaseAndNumbers) passwordStrengthScore++;
-                
+
                 const hasSpecialCharacters = /[^A-Za-z0-9]/.test(currentPassword);
                 if (hasSpecialCharacters) passwordStrengthScore++;
-                
+
                 const strengthClasses = ['weak', 'weak', 'medium', 'strong'];
                 const strengthLabels = ['Too short', 'Weak', 'Medium', 'Strong!'];
-                
+
                 strengthBars.forEach((bar, index) => {
                     const shouldFillBar = index < passwordStrengthScore;
                     const classToApply = shouldFillBar ? ` ${strengthClasses[passwordStrengthScore - 1]}` : '';
                     bar.className = `strength-bar${classToApply}`;
                 });
-                
+
                 const labelElement = document.getElementById('strengthLabel');
                 if (labelElement) {
                     labelElement.textContent = passwordStrengthScore > 0 ? strengthLabels[passwordStrengthScore - 1] : 'Enter password';
@@ -258,7 +260,7 @@
         }
 
         const registerButton = document.getElementById('registerBtn');
-        
+
         if (registerButton) {
             registerButton.addEventListener('click', async () => {
                 const firstNameInput = document.getElementById('firstName');
@@ -268,7 +270,7 @@
                 const passwordInput = document.getElementById('regPassword');
                 const roleInput = document.querySelector('input[name="regRole"]:checked');
                 const termsCheckbox = document.getElementById('termsCheck');
-                
+
                 const firstName = firstNameInput.value.trim();
                 const lastName = lastNameInput.value.trim();
                 const emailAddress = emailInput.value.trim();
@@ -276,31 +278,31 @@
                 const userPassword = passwordInput.value;
                 const userRole = roleInput ? roleInput.value : 'patient';
                 const isTermsAccepted = termsCheckbox.checked;
-                
+
                 const otpInputs = document.querySelectorAll('.otp-input');
                 let otpValue = '';
                 otpInputs.forEach(input => { otpValue += input.value; });
-                
+
                 const isMissingRequiredFields = !firstName || !emailAddress || !phoneNumber || !userPassword || otpValue.length < 6;
                 if (isMissingRequiredFields) {
                     showToast('Please fill all required fields and enter the 6-digit OTP.', 'error');
                     return;
                 }
-                
+
                 const isPasswordTooShort = userPassword.length < 6;
                 if (isPasswordTooShort) {
                     showToast('Password must be at least 6 characters.', 'error');
                     return;
                 }
-                
+
                 if (!isTermsAccepted) {
                     showToast('Please accept the Terms of Service.', 'error');
                     return;
                 }
-                
+
                 registerButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account...';
                 registerButton.disabled = true;
-                
+
                 try {
                     const fullName = `${firstName} ${lastName}`;
                     const registrationRequest = {
@@ -315,23 +317,23 @@
                             otp: otpValue
                         })
                     };
-                    
+
                     const serverResponse = await fetch(`${API_BASE_URL}/auth/register`, registrationRequest);
                     const responseData = await serverResponse.json();
-                    
+
                     if (!serverResponse.ok) {
                         throw new Error(responseData.error || 'Registration failed.');
                     }
-                    
+
                     localStorage.setItem('rr_token', responseData.token);
                     localStorage.setItem('rr_user', JSON.stringify(responseData.user));
-                    
+
                     showToast(`Welcome to Rapid Rescue, ${firstName}! 🚑`, 'success');
-                    
+
                     setTimeout(() => {
                         window.location.href = responseData.user.role === 'provider' ? 'admin.html' : 'index.html';
                     }, 1500);
-                    
+
                 } catch (error) {
                     showToast(error.message, 'error');
                     registerButton.innerHTML = 'Create Free Account';
