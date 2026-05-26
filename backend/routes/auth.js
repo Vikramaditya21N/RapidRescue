@@ -2,12 +2,10 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { sendOtpEmail } = require('../utils/mailer');
-const { sendSms } = require('../utils/sms');
+const { sendDispatchEmail } = require('../utils/mailer');
+const { sendOtp, verifyOtp } = require('../utils/sms');
 
 const router = express.Router();
-
-const otpCache = new Map(); // email -> OTP
 
 function generateAuthenticationToken(user) {
   const payload = {
@@ -16,65 +14,47 @@ function generateAuthenticationToken(user) {
     email: user.email,
     role: user.role
   };
-
   return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
 }
 
+// [POST] Send OTP for registration
 router.post('/send-otp', async (request, response) => {
   try {
     const { phone } = request.body;
-    
+
     if (!phone) {
-      return response.status(400).json({ error: 'Phone number is required to send OTP.' });
+      return response.status(400).json({ error: 'Phone number is required.' });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    
-    // Store in memory for 10 minutes
-    otpCache.set(phone, {
-      otp,
-      expiresAt: Date.now() + 10 * 60 * 1000
-    });
+    await sendOtp(phone);
+    response.json({ message: 'OTP sent successfully to your mobile number.' });
 
-    const message = `Your One-Time Password (OTP) for Rapid Rescue registration is: ${otp}. Do not share this with anyone.`;
-    await sendSms(phone, message);
-    
-    response.json({ message: 'OTP sent successfully to mobile.' });
   } catch (error) {
-    console.error(error);
-    response.status(500).json({ error: 'Server error while sending OTP.' });
+    console.error('[/send-otp]', error.message);
+    response.status(500).json({ error: 'Failed to send OTP. Please check the phone number and try again.' });
   }
 });
 
+// [POST] Register a new user (verifies OTP via Twilio Verify)
 router.post('/register', async (request, response) => {
   try {
     const { name, email, phone, password, role, otp } = request.body;
 
-    const missingRequiredFields = !name || !email || !phone || !password || !otp;
-    if (missingRequiredFields) {
+    if (!name || !email || !phone || !password || !otp) {
       return response.status(400).json({ error: 'All fields including OTP are required.' });
     }
 
-    // Verify OTP against phone since we sent it via SMS
-    const cachedOtpData = otpCache.get(phone);
-    if (!cachedOtpData) {
-      return response.status(400).json({ error: 'Please request an OTP first.' });
+    // Verify OTP with Twilio
+    const isOtpValid = await verifyOtp(phone, otp);
+    if (!isOtpValid) {
+      return response.status(400).json({ error: 'Invalid or expired OTP.' });
     }
 
-    if (Date.now() > cachedOtpData.expiresAt) {
-      otpCache.delete(phone);
-      return response.status(400).json({ error: 'OTP has expired. Please request a new one.' });
-    }
-
-    if (cachedOtpData.otp !== otp) {
-      return response.status(400).json({ error: 'Invalid OTP.' });
-    }
-
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
-    if (existingUser) {
+    const existingEmail = await User.findOne({ email: email.toLowerCase() });
+    if (existingEmail) {
       return response.status(409).json({ error: 'Email already registered.' });
     }
-    
+
     const existingPhone = await User.findOne({ phone });
     if (existingPhone) {
       return response.status(409).json({ error: 'Phone number already registered.' });
@@ -84,23 +64,20 @@ router.post('/register', async (request, response) => {
 
     const newUser = new User({
       id: Date.now(),
-      name: name,
+      name,
       email: email.toLowerCase(),
-      phone: phone,
+      phone,
       password: hashedPassword,
       role: role || 'patient'
     });
 
     await newUser.save();
 
-    // Clear OTP after successful registration
-    otpCache.delete(phone);
-
     const token = generateAuthenticationToken(newUser);
 
     response.status(201).json({
       message: 'Registration successful!',
-      token: token,
+      token,
       user: {
         id: newUser.id,
         name: newUser.name,
@@ -109,18 +86,20 @@ router.post('/register', async (request, response) => {
         phone: newUser.phone
       }
     });
+
   } catch (error) {
-    console.error(error);
+    console.error('[/register]', error.message);
     response.status(500).json({ error: 'Server error during registration.' });
   }
 });
 
+// [POST] Send OTP for login
 router.post('/send-login-otp', async (request, response) => {
   try {
     const { phone } = request.body;
 
     if (!phone) {
-      return response.status(400).json({ error: 'Mobile number is required to send OTP.' });
+      return response.status(400).json({ error: 'Mobile number is required.' });
     }
 
     const user = await User.findOne({ phone });
@@ -128,24 +107,16 @@ router.post('/send-login-otp', async (request, response) => {
       return response.status(404).json({ error: 'No account found with this mobile number.' });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // Store in memory for 10 minutes
-    otpCache.set(phone, {
-      otp,
-      expiresAt: Date.now() + 10 * 60 * 1000
-    });
-
-    const message = `Your One-Time Password (OTP) for Rapid Rescue login is: ${otp}. Do not share this with anyone.`;
-    await sendSms(phone, message);
-
+    await sendOtp(phone);
     response.json({ message: 'OTP sent successfully via SMS.' });
+
   } catch (error) {
-    console.error(error);
-    response.status(500).json({ error: 'Server error while sending SMS OTP.' });
+    console.error('[/send-login-otp]', error.message);
+    response.status(500).json({ error: 'Failed to send OTP. Please try again.' });
   }
 });
 
+// [POST] Login with OTP (verifies OTP via Twilio Verify)
 router.post('/login-with-otp', async (request, response) => {
   try {
     const { phone, otp } = request.body;
@@ -154,19 +125,10 @@ router.post('/login-with-otp', async (request, response) => {
       return response.status(400).json({ error: 'Mobile number and OTP are required.' });
     }
 
-    // Verify OTP
-    const cachedOtpData = otpCache.get(phone);
-    if (!cachedOtpData) {
-      return response.status(400).json({ error: 'Please request an OTP first.' });
-    }
-
-    if (Date.now() > cachedOtpData.expiresAt) {
-      otpCache.delete(phone);
-      return response.status(400).json({ error: 'OTP has expired. Please request a new one.' });
-    }
-
-    if (cachedOtpData.otp !== otp) {
-      return response.status(400).json({ error: 'Invalid OTP.' });
+    // Verify OTP with Twilio
+    const isOtpValid = await verifyOtp(phone, otp);
+    if (!isOtpValid) {
+      return response.status(400).json({ error: 'Invalid or expired OTP.' });
     }
 
     const user = await User.findOne({ phone });
@@ -174,14 +136,11 @@ router.post('/login-with-otp', async (request, response) => {
       return response.status(404).json({ error: 'No account found with this mobile number.' });
     }
 
-    // Clear OTP after successful login
-    otpCache.delete(phone);
-
     const token = generateAuthenticationToken(user);
 
     response.json({
       message: 'Login successful!',
-      token: token,
+      token,
       user: {
         id: user.id,
         name: user.name,
@@ -190,8 +149,9 @@ router.post('/login-with-otp', async (request, response) => {
         phone: user.phone
       }
     });
+
   } catch (error) {
-    console.error(error);
+    console.error('[/login-with-otp]', error.message);
     response.status(500).json({ error: 'Server error during OTP login.' });
   }
 });

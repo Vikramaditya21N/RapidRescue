@@ -99,12 +99,12 @@
             </div>
 
             <div class="driver-card">
-              <div class="driver-avatar">RK</div>
+              <div class="driver-avatar" id="driverAvatar">RK</div>
               <div class="driver-info">
-                <strong>Ravi Kumar</strong>
-                <span>Paramedic · DL-9823 · ★ 4.9</span>
+                <strong id="driverName">Paramedic</strong>
+                <span id="driverDetails">Assigned upon dispatch</span>
               </div>
-              <button class="driver-call" id="callParamedicBtn" title="Call Paramedic">
+              <button class="driver-call" id="callParamedicBtn" title="Call Paramedic" data-phone="">
                 <i class="fas fa-phone"></i>
               </button>
             </div>
@@ -278,9 +278,22 @@
       try {
         const res = await fetch(`${API_BASE_URL}/bookings/${bookingId}`);
         const data = await res.json();
-        if (data && data.booking && data.booking.patient_lat && data.booking.patient_lng) {
-          userLat = data.booking.patient_lat;
-          userLng = data.booking.patient_lng;
+        if (data && data.booking) {
+          const b = data.booking;
+          if (b.patient_lat && b.patient_lng) {
+            userLat = b.patient_lat;
+            userLng = b.patient_lng;
+          }
+          // Populate paramedic card with real data
+          if (b.paramedic_name) {
+            const initials = b.paramedic_name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+            document.getElementById('driverAvatar').textContent = initials;
+            document.getElementById('driverName').textContent = b.paramedic_name;
+          }
+          if (b.paramedic_phone) {
+            document.getElementById('driverDetails').textContent = `Paramedic · ${b.paramedic_phone}`;
+            document.getElementById('callParamedicBtn').dataset.phone = b.paramedic_phone;
+          }
         }
       } catch (e) { console.error('Initial fetch failed', e); }
 
@@ -288,7 +301,7 @@
         initMap(userLat, userLng);
       }
       pollBooking(bookingId);
-      showToast('✅ Live tracking activated for ' + bookingId, 'success');
+      showToast('Live tracking activated for ' + bookingId, 'success');
     }
 
     // ── GPS Locate Button
@@ -346,7 +359,14 @@
 
     // ── Call Paramedic
     document.getElementById('callParamedicBtn').addEventListener('click', () => {
-      showToast('📞 Calling paramedic Ravi Kumar...', 'info');
+      const btn = document.getElementById('callParamedicBtn');
+      const phone = btn.dataset.phone;
+      const name = document.getElementById('driverName').textContent;
+      if (phone) {
+        window.location.href = `tel:${phone}`;
+      } else {
+        showToast('Paramedic contact not yet available.', 'info');
+      }
     });
 
     // ── Auto-load from localStorage or URL param

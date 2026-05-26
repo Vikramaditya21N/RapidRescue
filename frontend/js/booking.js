@@ -272,20 +272,27 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       if (selectedPaymentElement && selectedPaymentElement.value === 'online') {
+        const razorpayKey = (typeof RAZORPAY_KEY !== 'undefined') ? RAZORPAY_KEY : '';
+
+        if (!razorpayKey || !window.Razorpay) {
+          showToast('Online payment is not configured. Processing as cash booking.', 'info');
+          processBooking();
+          return;
+        }
+
         const options = {
-          "key": "rzp_test_demo12345", // Mock test key
-          "amount": Math.round((currentBookingData.totalFare || 800) * 100), // paise
+          "key": razorpayKey,
+          "amount": Math.round((currentBookingData.totalFare || 800) * 100),
           "currency": "INR",
           "name": "Rapid Rescue",
           "description": "Ambulance Booking Fare",
-          "image": "https://cdn-icons-png.flaticon.com/512/1032/1032986.png",
           "handler": function (response) {
               showToast("Payment Successful! Processing booking...", "success");
               processBooking();
           },
           "prefill": {
               "name": currentBookingData.name,
-              "email": currentBookingData.email || "patient@example.com",
+              "email": currentBookingData.email || "",
               "contact": currentBookingData.phone
           },
           "theme": { "color": "#ef4444" },

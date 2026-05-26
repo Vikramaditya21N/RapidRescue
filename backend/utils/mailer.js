@@ -1,35 +1,36 @@
 const nodemailer = require('nodemailer');
 
-// For your final project demo, this uses a completely free, fake SMTP service called Ethereal.
-// It will print a URL to your terminal where you can see the email exactly as it would look in a real inbox!
-// If you want to use REAL Gmail, replace host, port, auth with:
-// service: 'gmail', auth: { user: 'your-email@gmail.com', pass: 'your-app-password' }
+function createTransporter() {
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailPass = process.env.GMAIL_APP_PASSWORD;
 
-async function getTransporter() {
-  // Generate a test account automatically
-  const testAccount = await nodemailer.createTestAccount();
+  if (gmailUser && gmailPass) {
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: gmailUser, pass: gmailPass }
+    });
+  }
 
-  return nodemailer.createTransport({
-    host: "smtp.ethereal.email",
-    port: 587,
-    secure: false,
-    auth: {
-      user: testAccount.user,
-      pass: testAccount.pass,
-    },
-  });
+  // Fallback: log-only mode when Gmail credentials are not configured
+  return null;
 }
 
 async function sendDispatchEmail(patientEmail, patientName, bookingId, eta) {
   if (!patientEmail) return;
 
-  try {
-    const transporter = await getTransporter();
+  const transporter = createTransporter();
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5500';
 
+  if (!transporter) {
+    console.log(`[MAILER] Dispatch email to ${patientEmail} for booking ${bookingId} — configure GMAIL_USER and GMAIL_APP_PASSWORD in .env to enable real emails.`);
+    return;
+  }
+
+  try {
     const mailOptions = {
-      from: '"Rapid Rescue Dispatch" <dispatch@rapidrescue.com>',
+      from: `"Rapid Rescue Dispatch" <${process.env.GMAIL_USER}>`,
       to: patientEmail,
-      subject: `🚑 Ambulance Dispatched! Booking #${bookingId}`,
+      subject: `Ambulance Dispatched! Booking #${bookingId}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
           <div style="background-color: #ef4444; color: white; padding: 20px; text-align: center;">
@@ -37,48 +38,42 @@ async function sendDispatchEmail(patientEmail, patientName, bookingId, eta) {
           </div>
           <div style="padding: 20px; background-color: #f8fafc;">
             <p>Hello <strong>${patientName}</strong>,</p>
-            <p>Your Rapid Rescue ambulance has been assigned by our provider and is now en route to your location.</p>
-            
+            <p>Your Rapid Rescue ambulance has been assigned and is now en route to your location.</p>
             <div style="background-color: white; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ef4444;">
               <p style="margin: 5px 0;"><strong>Booking ID:</strong> ${bookingId}</p>
               <p style="margin: 5px 0;"><strong>Estimated Arrival:</strong> ${eta}</p>
-              <p style="margin: 5px 0;"><strong>Paramedic:</strong> Ravi Kumar</p>
             </div>
-
             <p style="text-align: center;">
-              <a href="http://localhost:5500/track.html?id=${bookingId}" style="display: inline-block; padding: 12px 24px; background-color: #ef4444; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">Track Live on Map</a>
+              <a href="${frontendUrl}/track.html?id=${bookingId}" style="display: inline-block; padding: 12px 24px; background-color: #ef4444; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">Track Live on Map</a>
             </p>
-            
             <p style="font-size: 12px; color: #64748b; margin-top: 30px; text-align: center;">
-              This is an automated message from Rapid Rescue. For emergencies, please stay calm and wait for the paramedics.
+              This is an automated message from Rapid Rescue. Please stay calm and wait for the paramedics.
             </p>
           </div>
         </div>
       `
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log("-----------------------------------------");
-    console.log("✉️  EMAIL SENT SUCCESSFULLY!");
-    console.log("To view the email, click this link:");
-    console.log(nodemailer.getTestMessageUrl(info));
-    console.log("-----------------------------------------");
-    
+    await transporter.sendMail(mailOptions);
+    console.log(`[MAILER] Dispatch email sent to ${patientEmail} for booking ${bookingId}.`);
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error('[MAILER] Error sending dispatch email:', error.message);
   }
 }
-
-module.exports = { sendDispatchEmail };
 
 async function sendOtpEmail(email, otp) {
   if (!email) return;
 
-  try {
-    const transporter = await getTransporter();
+  const transporter = createTransporter();
 
+  if (!transporter) {
+    console.log(`[MAILER] OTP email to ${email}: ${otp} — configure GMAIL_USER and GMAIL_APP_PASSWORD in .env to enable real emails.`);
+    return;
+  }
+
+  try {
     const mailOptions = {
-      from: '"Rapid Rescue Accounts" <accounts@rapidrescue.com>',
+      from: `"Rapid Rescue Accounts" <${process.env.GMAIL_USER}>`,
       to: email,
       subject: `Your OTP for Rapid Rescue: ${otp}`,
       html: `
@@ -87,23 +82,18 @@ async function sendOtpEmail(email, otp) {
             <h1 style="margin: 0; font-size: 24px;">Verification Code</h1>
           </div>
           <div style="padding: 20px; background-color: #f8fafc; text-align: center;">
-            <p>Your One-Time Password (OTP) for Rapid Rescue registration is:</p>
+            <p>Your One-Time Password (OTP) for Rapid Rescue is:</p>
             <h2 style="font-size: 36px; letter-spacing: 5px; color: #333; background: #e2e8f0; padding: 10px; border-radius: 5px; display: inline-block;">${otp}</h2>
-            <p style="color: #64748b; margin-top: 20px;">This OTP is valid for 10 minutes. Please do not share it with anyone.</p>
+            <p style="color: #64748b; margin-top: 20px;">This OTP is valid for 10 minutes. Do not share it with anyone.</p>
           </div>
         </div>
       `
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log("-----------------------------------------");
-    console.log("✉️  OTP EMAIL SENT SUCCESSFULLY!");
-    console.log("To view the OTP email, click this link:");
-    console.log(nodemailer.getTestMessageUrl(info));
-    console.log("-----------------------------------------");
-    
+    await transporter.sendMail(mailOptions);
+    console.log(`[MAILER] OTP email sent to ${email}.`);
   } catch (error) {
-    console.error("Error sending OTP email:", error);
+    console.error('[MAILER] Error sending OTP email:', error.message);
   }
 }
 

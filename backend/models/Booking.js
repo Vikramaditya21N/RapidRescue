@@ -15,7 +15,7 @@ const bookingSchema = new mongoose.Schema({
   patient_age: { type: String, default: '' },
   notes: { type: String, default: '' },
   payment_method: { type: String, default: 'cash' },
-  status: { type: String, default: 'dispatched' },
+  status: { type: String, default: 'pending' },
   eta: { type: String, required: true },
   fare: { type: Number, required: true },
   paramedic_name: { type: String, default: 'Ravi Kumar' },

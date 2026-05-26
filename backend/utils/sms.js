@@ -1,38 +1,41 @@
 const twilio = require('twilio');
 
-async function sendSms(to, message) {
-  const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const fromNumber = process.env.TWILIO_PHONE_NUMBER;
-  const messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID;
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
 
-  if (!accountSid || !authToken || (!fromNumber && !messagingServiceSid)) {
-    console.error("⚠️ TWILIO CREDENTIALS MISSING: To send a real SMS, add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and either TWILIO_PHONE_NUMBER or TWILIO_MESSAGING_SERVICE_SID to your .env file.");
-    console.log(`[SIMULATED SMS to ${to}]: ${message}`);
+function getClient() {
+  return twilio(accountSid, authToken);
+}
+
+// Sends OTP to a phone number using Twilio Verify
+async function sendOtp(phone) {
+  if (!accountSid || !authToken || !verifyServiceSid) {
+    console.log(`[SMS] Twilio Verify not configured. OTP for ${phone} would be sent here.`);
     return;
   }
 
-  const client = twilio(accountSid, authToken);
-  
-  try {
-    const messagePayload = {
-      body: message,
-      to: to
-    };
+  const client = getClient();
+  await client.verify.v2.services(verifyServiceSid)
+    .verifications
+    .create({ to: phone, channel: 'sms' });
 
-    if (messagingServiceSid) {
-      messagePayload.messagingServiceSid = messagingServiceSid;
-    } else {
-      messagePayload.from = fromNumber;
-    }
-
-    const response = await client.messages.create(messagePayload);
-    console.log(`SMS sent successfully to ${to}. Message SID: ${response.sid}`);
-    return response;
-  } catch (error) {
-    console.error("Failed to send SMS via Twilio:", error);
-    throw error;
-  }
+  console.log(`[SMS] OTP sent via Twilio Verify to ${phone}`);
 }
 
-module.exports = { sendSms };
+// Verifies the OTP code entered by the user
+async function verifyOtp(phone, code) {
+  if (!accountSid || !authToken || !verifyServiceSid) {
+    console.warn('[SMS] Twilio Verify not configured — skipping real OTP check.');
+    return true; // Allow in dev if not configured
+  }
+
+  const client = getClient();
+  const result = await client.verify.v2.services(verifyServiceSid)
+    .verificationChecks
+    .create({ to: phone, code: code });
+
+  return result.status === 'approved';
+}
+
+module.exports = { sendOtp, verifyOtp };

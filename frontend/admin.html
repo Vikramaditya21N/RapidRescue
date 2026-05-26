@@ -114,7 +114,7 @@
               <td>${b.patient_name || 'Unknown'}</td>
               <td>${(b.pickup_address || '').substring(0, 30)}...</td>
               <td>${b.ambulance_type || 'BLS'}</td>
-              <td><span style="color:var(--text-400)">Just now</span></td>
+              <td><span style="color:var(--text-400)">${b.created_at ? new Date(b.created_at).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) : '—'}</span></td>
               <td><span class="badge ${badgeClass}">${b.status.toUpperCase()}</span></td>
               <td>${actionBtn}</td>
             </tr>
