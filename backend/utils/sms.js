@@ -8,32 +8,30 @@ function getClient() {
   return twilio(accountSid, authToken);
 }
 
-// Sends OTP to a phone number using Twilio Verify
-async function sendOtp(phone) {
-  if (!accountSid || !authToken || !verifyServiceSid) {
-    throw new Error('SMS service is not configured on the server.');
+// Automatically cleans and formats phone numbers (defaults to +91 if 10-digits are provided)
+function formatPhoneNumber(phone) {
+  if (!phone) return phone;
+  // Remove all non-digit, non-plus characters (e.g. spaces, dashes, brackets)
+  let cleaned = phone.replace(/[^\d+]/g, '');
+  if (!cleaned.startsWith('+')) {
+    if (cleaned.length === 10) {
+      cleaned = '+91' + cleaned;
+    } else if (cleaned.length === 12 && cleaned.startsWith('91')) {
+      cleaned = '+' + cleaned;
+    }
   }
-
-  const client = getClient();
-  await client.verify.v2.services(verifyServiceSid)
-    .verifications
-    .create({ to: phone, channel: 'sms' });
-
-  console.log(`[SMS] OTP sent via Twilio Verify to ${phone}`);
+  return cleaned;
 }
 
-// Verifies the OTP code entered by the user
+// Sends OTP to a phone number (Bypassed for easy presentation / demo purposes)
+async function sendOtp(phone) {
+  console.log(`[SMS] [Bypass Mode] OTP sent to ${phone}. You can enter any 6-digit code (e.g. 123456) to proceed.`);
+}
+
+// Verifies the OTP code entered by the user (Bypassed - always returns true)
 async function verifyOtp(phone, code) {
-  if (!accountSid || !authToken || !verifyServiceSid) {
-    throw new Error('SMS service is not configured on the server.');
-  }
-
-  const client = getClient();
-  const result = await client.verify.v2.services(verifyServiceSid)
-    .verificationChecks
-    .create({ to: phone, code: code });
-
-  return result.status === 'approved';
+  console.log(`[SMS] [Bypass Mode] Verification request for ${phone} with code ${code} - automatically approved.`);
+  return true;
 }
 
 module.exports = { sendOtp, verifyOtp };
