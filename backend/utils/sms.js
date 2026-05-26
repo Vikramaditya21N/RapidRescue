@@ -11,8 +11,7 @@ function getClient() {
 // Sends OTP to a phone number using Twilio Verify
 async function sendOtp(phone) {
   if (!accountSid || !authToken || !verifyServiceSid) {
-    console.log(`[SMS] Twilio Verify not configured. OTP for ${phone} would be sent here.`);
-    return;
+    throw new Error('SMS service is not configured on the server.');
   }
 
   const client = getClient();
@@ -26,8 +25,7 @@ async function sendOtp(phone) {
 // Verifies the OTP code entered by the user
 async function verifyOtp(phone, code) {
   if (!accountSid || !authToken || !verifyServiceSid) {
-    console.warn('[SMS] Twilio Verify not configured — skipping real OTP check.');
-    return true; // Allow in dev if not configured
+    throw new Error('SMS service is not configured on the server.');
   }
 
   const client = getClient();
