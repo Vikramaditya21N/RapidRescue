@@ -31,7 +31,7 @@ router.post('/send-otp', async (request, response) => {
 
   } catch (error) {
     console.error('[/send-otp]', error.message);
-    response.status(500).json({ error: 'Failed to send OTP. Please check the phone number and try again.' });
+    response.status(500).json({ error: error.message });
   }
 });
 
@@ -112,7 +112,7 @@ router.post('/send-login-otp', async (request, response) => {
 
   } catch (error) {
     console.error('[/send-login-otp]', error.message);
-    response.status(500).json({ error: 'Failed to send OTP. Please try again.' });
+    response.status(500).json({ error: error.message });
   }
 });
 
