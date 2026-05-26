@@ -37,30 +37,6 @@ app.get('/api/health', (request, response) => {
   });
 });
 
-app.get('/api/health/debug-env', (request, response) => {
-  response.json({
-    TWILIO_ACCOUNT_SID: {
-      exists: !!process.env.TWILIO_ACCOUNT_SID,
-      length: process.env.TWILIO_ACCOUNT_SID ? process.env.TWILIO_ACCOUNT_SID.length : 0,
-      prefix: process.env.TWILIO_ACCOUNT_SID ? process.env.TWILIO_ACCOUNT_SID.substring(0, 5) : null
-    },
-    TWILIO_AUTH_TOKEN: {
-      exists: !!process.env.TWILIO_AUTH_TOKEN,
-      length: process.env.TWILIO_AUTH_TOKEN ? process.env.TWILIO_AUTH_TOKEN.length : 0,
-      prefix: process.env.TWILIO_AUTH_TOKEN ? process.env.TWILIO_AUTH_TOKEN.substring(0, 3) : null
-    },
-    TWILIO_VERIFY_SERVICE_SID: {
-      exists: !!process.env.TWILIO_VERIFY_SERVICE_SID,
-      length: process.env.TWILIO_VERIFY_SERVICE_SID ? process.env.TWILIO_VERIFY_SERVICE_SID.length : 0,
-      prefix: process.env.TWILIO_VERIFY_SERVICE_SID ? process.env.TWILIO_VERIFY_SERVICE_SID.substring(0, 4) : null
-    },
-    MONGO_URI: {
-      exists: !!process.env.MONGO_URI,
-      length: process.env.MONGO_URI ? process.env.MONGO_URI.length : 0,
-      prefix: process.env.MONGO_URI ? process.env.MONGO_URI.substring(0, 15) : null
-    }
-  });
-});
 
 app.use((request, response) => {
   response.status(404).json({ error: 'Route not found.' });
