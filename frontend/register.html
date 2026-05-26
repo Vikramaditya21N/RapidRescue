@@ -169,7 +169,7 @@
                     const otpRequest = {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ phone: phoneNumber })
+                        body: JSON.stringify({ phone: phoneNumber, email: emailAddress })
                     };
 
                     const serverResponse = await fetch(`${API_BASE_URL}/auth/send-otp`, otpRequest);
@@ -180,7 +180,7 @@
                     }
 
                     otpSection.classList.add('visible');
-                    showToast(`OTP sent via SMS!`, 'success');
+                    showToast(responseData.message || 'OTP sent successfully!', 'success');
 
                     if (firstOtpInput) {
                         firstOtpInput.focus();

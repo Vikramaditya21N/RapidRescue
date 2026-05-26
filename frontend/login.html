@@ -109,7 +109,7 @@
                     loginButton.style.opacity = '1';
                     loginButton.style.cursor = 'pointer';
                     
-                    showToast('OTP sent via SMS!', 'success');
+                    showToast(responseData.message || 'OTP sent successfully!', 'success');
                     
                     if (otpInputs.length > 0) {
                         otpInputs[0].focus();

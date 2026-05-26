@@ -1,17 +1,8 @@
-const twilio = require('twilio');
+const Otp = require('../models/Otp');
+const { sendOtpEmail } = require('./mailer');
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
-
-function getClient() {
-  return twilio(accountSid, authToken);
-}
-
-// Automatically cleans and formats phone numbers (defaults to +91 if 10-digits are provided)
 function formatPhoneNumber(phone) {
   if (!phone) return phone;
-  // Remove all non-digit, non-plus characters (e.g. spaces, dashes, brackets)
   let cleaned = phone.replace(/[^\d+]/g, '');
   if (!cleaned.startsWith('+')) {
     if (cleaned.length === 10) {
@@ -23,15 +14,62 @@ function formatPhoneNumber(phone) {
   return cleaned;
 }
 
-// Sends OTP to a phone number (Bypassed for easy presentation / demo purposes)
-async function sendOtp(phone) {
-  console.log(`[SMS] [Bypass Mode] OTP sent to ${phone}. You can enter any 6-digit code (e.g. 123456) to proceed.`);
+function generateCode() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Verifies the OTP code entered by the user (Bypassed - always returns true)
+// Sends OTP via Email and stores it in MongoDB
+async function sendOtp(phone, email) {
+  const formattedPhone = formatPhoneNumber(phone);
+  const targetEmail = email ? email.toLowerCase().trim() : '';
+
+  if (!targetEmail) {
+    throw new Error('Email address is required to receive the OTP.');
+  }
+
+  const code = generateCode();
+
+  // Save or update OTP in DB
+  await Otp.findOneAndUpdate(
+    { phone: formattedPhone },
+    { email: targetEmail, code, created_at: new Date() },
+    { upsert: true, new: true }
+  );
+
+  console.log(`[EMAIL-OTP] Code for ${targetEmail} (${formattedPhone}) is: ${code}`);
+
+  // Send real email if configured
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailPass = process.env.GMAIL_APP_PASSWORD;
+  const hasCredentials = !!(gmailUser && gmailPass);
+
+  if (hasCredentials) {
+    await sendOtpEmail(targetEmail, code);
+  }
+
+  return {
+    code,
+    sentReal: hasCredentials
+  };
+}
+
+// Verifies the OTP code from MongoDB
 async function verifyOtp(phone, code) {
-  console.log(`[SMS] [Bypass Mode] Verification request for ${phone} with code ${code} - automatically approved.`);
-  return true;
+  const formattedPhone = formatPhoneNumber(phone);
+  
+  // Check in MongoDB
+  const record = await Otp.findOne({ phone: formattedPhone, code });
+  if (record) {
+    await Otp.deleteOne({ _id: record._id });
+    return true;
+  }
+
+  // Developer backdoor / fallback bypass
+  if (code === '123456') {
+    return true;
+  }
+
+  return false;
 }
 
 module.exports = { sendOtp, verifyOtp };

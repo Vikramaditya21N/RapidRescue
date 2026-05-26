@@ -20,14 +20,22 @@ function generateAuthenticationToken(user) {
 // [POST] Send OTP for registration
 router.post('/send-otp', async (request, response) => {
   try {
-    const { phone } = request.body;
+    const { phone, email } = request.body;
 
     if (!phone) {
       return response.status(400).json({ error: 'Phone number is required.' });
     }
+    if (!email) {
+      return response.status(400).json({ error: 'Email address is required.' });
+    }
 
-    await sendOtp(phone);
-    response.json({ message: 'OTP sent successfully to your mobile number.' });
+    const info = await sendOtp(phone, email);
+    
+    if (info.sentReal) {
+      response.json({ message: `OTP sent successfully to ${email}!` });
+    } else {
+      response.json({ message: `[Demo Mode] OTP sent to ${email}. Code: ${info.code}` });
+    }
 
   } catch (error) {
     console.error('[/send-otp]', error.message);
@@ -107,8 +115,13 @@ router.post('/send-login-otp', async (request, response) => {
       return response.status(404).json({ error: 'No account found with this mobile number.' });
     }
 
-    await sendOtp(phone);
-    response.json({ message: 'OTP sent successfully via SMS.' });
+    const info = await sendOtp(phone, user.email);
+    
+    if (info.sentReal) {
+      response.json({ message: `OTP sent successfully to your registered email: ${user.email}!` });
+    } else {
+      response.json({ message: `[Demo Mode] OTP sent to email. Code: ${info.code}` });
+    }
 
   } catch (error) {
     console.error('[/send-login-otp]', error.message);
